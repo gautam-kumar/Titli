@@ -1,0 +1,96 @@
+:root {
+  --ink: #101014; --mute: rgba(16, 16, 20, .5); --line: rgba(10, 10, 11, .08);
+  --pink: #FF4FA3; --violet: #7B61FF; --cyan: #00C2FF; --amber: #FFB547;
+  --grad: linear-gradient(135deg, #00C2FF, #7B61FF 40%, #FF4FA3 70%, #FFB547);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent }
+html, body { height: 100%; background: #F2F1F5; color: var(--ink); -webkit-font-smoothing: antialiased; overflow: hidden }
+body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif }
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer }
+
+.aura { position: fixed; inset: 0; pointer-events: none; overflow: hidden }
+.aura i { position: absolute; border-radius: 50%; filter: blur(70px) }
+.aura .a1 { width: 300px; height: 300px; left: -90px; top: 55%; background: var(--pink); opacity: .3 }
+.aura .a2 { width: 280px; height: 280px; right: -80px; top: 64%; background: var(--violet); opacity: .3 }
+.aura .a3 { width: 240px; height: 240px; left: 15%; top: 82%; background: var(--cyan); opacity: .22 }
+
+.app { position: relative; max-width: 440px; height: 100%; margin: 0 auto; display: flex; flex-direction: column; padding: max(14px, env(safe-area-inset-top)) 12px calc(18px + var(--safe-b)) }
+
+.top { position: relative; padding: 8px 12px 12px; min-height: 120px }
+.meta { display: flex; justify-content: space-between; font: 400 12px Sora; color: var(--mute) }
+.meta .live { color: var(--pink) }
+.greet { margin-top: 10px; font: 200 clamp(30px, 9.6vw, 38px)/1.06 Sora; letter-spacing: -.04em }
+.greet b { font-weight: 500 }
+.greet.quote { font-size: clamp(21px, 6.4vw, 25px); line-height: 1.25; letter-spacing: -.03em }
+.greet .hl { font-weight: 500; background: linear-gradient(90deg, var(--violet), var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent }
+.back { display: none; position: absolute; right: 8px; top: 2px; font: 500 12px Sora; color: var(--mute); padding: 4px 8px }
+[data-mode=answer] .back, [data-mode=saved] .back { display: block }
+[data-mode=answer] #metaRight, [data-mode=saved] #metaRight { visibility: hidden }
+
+.hero { position: relative; flex: 1 1 260px; min-height: 220px; border-radius: 26px; overflow: hidden; background: linear-gradient(#fbfaf7, #f1ecf7); box-shadow: inset 0 1px 0 #fff, 0 18px 40px -20px rgba(90, 60, 160, .35) }
+.hero canvas { position: absolute; inset: 0; width: 100%; height: 100% }
+.hero-cap { position: absolute; left: 18px; right: 18px; top: 14px; display: flex; justify-content: space-between; font: 600 12px 'Plus Jakarta Sans'; color: rgba(10, 10, 11, .5); pointer-events: none }
+.hero-tags { position: absolute; inset: 0; pointer-events: none }
+.hero-tags .tag { position: absolute; left: 0; top: 0; background: #fff; border-radius: 12px; padding: 7px 10px; box-shadow: 0 8px 20px -8px rgba(10, 10, 11, .25); white-space: nowrap; transition: opacity .3s }
+.hero-tags .tag b { display: block; font: 700 12px/1.15 'Plus Jakarta Sans' }
+.hero-tags .tag span { display: block; font: 600 10.5px 'Plus Jakarta Sans'; color: rgba(10, 10, 11, .5); margin-top: 2px }
+
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; flex: 0 0 auto }
+.gt { position: relative; border-radius: 26px; padding: 16px; overflow: hidden; min-height: 132px; background: linear-gradient(160deg, rgba(255, 255, 255, .82), rgba(255, 255, 255, .5)); backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%); border: 1px solid rgba(255, 255, 255, .95); box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 rgba(255, 255, 255, .4), 0 18px 40px -20px rgba(90, 60, 160, .38); animation: rise .5s cubic-bezier(.2, .8, .2, 1) both }
+.gt::before { content: ""; position: absolute; width: 220px; height: 220px; border-radius: 50%; right: -90px; bottom: -110px; background: radial-gradient(circle, var(--g, var(--pink)) 0%, transparent 68%); opacity: .55; pointer-events: none }
+.gt.wide { grid-column: 1 / -1 }
+.gt .lb { position: relative; font: 600 12px 'Plus Jakarta Sans'; color: rgba(10, 10, 11, .5) }
+.gt .big { position: relative; font: 800 28px/1 'Plus Jakarta Sans'; letter-spacing: -.04em }
+.gt .thin { position: relative; font: 200 46px/1 Sora; letter-spacing: -.05em; margin-top: 8px }
+.gt .mid { position: relative; font: 800 16px/1.15 'Plus Jakarta Sans'; letter-spacing: -.02em }
+.gt .bottom { position: absolute; left: 16px; right: 16px; bottom: 14px }
+.gt img.obj { position: absolute; pointer-events: none }
+.gt .row { position: relative; display: flex; align-items: center; gap: 8px; font: 700 12.5px/1.85 'Plus Jakarta Sans' }
+.gt .row img { width: 14px; height: 14px; flex: none }
+.gt .row .r { margin-left: auto; white-space: nowrap }
+.gt .row .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.gt .list .row { padding: 9px 0; border-bottom: 1px solid var(--line); font-weight: 600; font-size: 13.5px; line-height: 1.3 }
+.gt .list .row:last-child { border-bottom: 0 }
+.gt .chip { display: inline-block; margin-top: 8px; font: 700 11.5px 'Plus Jakarta Sans'; background: rgba(255, 255, 255, .9); border-radius: 14px; padding: 6px 10px }
+.gt .empty { position: relative; font: 500 13px/1.4 'Plus Jakarta Sans'; color: rgba(10, 10, 11, .55); margin-top: 10px }
+.avatar { position: relative; width: 46px; height: 46px; flex: none }
+.avatar img { width: 46px; height: 46px }
+.avatar span { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font: 800 17px 'Plus Jakarta Sans'; text-shadow: 0 1px 4px rgba(120, 0, 60, .4) }
+button.gt { text-align: left; display: block; width: 100% }
+.play { position: relative; width: 48px; height: 48px; flex: none }
+.play img { width: 48px; height: 48px }
+.play svg { position: absolute; left: 18px; top: 16px }
+@keyframes rise { from { opacity: 0; transform: translateY(14px) scale(.98) } }
+
+.dock { display: flex; gap: 10px; margin-top: 10px; align-items: center }
+.type { width: 64px; height: 64px; border-radius: 32px; flex: none; font: 500 17px Sora; background: linear-gradient(160deg, rgba(255, 255, 255, .85), rgba(255, 255, 255, .55)); border: 1px solid #fff; box-shadow: 0 12px 30px -16px rgba(90, 60, 160, .4); backdrop-filter: blur(16px) }
+.pill { flex: 1; height: 64px; border-radius: 32px; background: var(--ink); color: #FAF9F6; display: flex; align-items: center; padding: 0 8px 0 24px; font: 400 16px Sora; letter-spacing: -.01em; box-shadow: 0 18px 40px -16px rgba(16, 16, 20, .5); overflow: hidden }
+.pill-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left }
+.pill .orb { margin-left: auto; width: 48px; height: 48px; border-radius: 24px; background: var(--grad); display: grid; place-items: center; box-shadow: 0 0 22px rgba(123, 97, 255, .55); flex: none; transition: transform .2s }
+.pill:active .orb { transform: scale(.92) }
+.pill .wave { display: none; align-items: center; gap: 3px; height: 30px; margin-right: 12px }
+.pill .wave i { display: block; width: 3px; border-radius: 2px; background: #FAF9F6; height: 6px; transition: height .12s }
+[data-mode=listen] .pill .wave { display: flex }
+[data-mode=listen] .pill { padding-left: 20px }
+[data-mode=listen] .pill-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left }
+.pill .orb { box-shadow: 0 0 0 0 rgba(255, 79, 163, .6); animation: pulse 1.4s infinite }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 79, 163, .55) } 100% { box-shadow: 0 0 0 16px rgba(255, 79, 163, 0) } }
+
+.typer { display: none; position: absolute; left: 12px; right: 12px; bottom: calc(92px + var(--safe-b)); gap: 8px; padding: 6px; border-radius: 30px; background: rgba(255, 255, 255, .92); backdrop-filter: blur(20px); box-shadow: 0 18px 40px -16px rgba(16, 16, 20, .4); border: 1px solid #fff }
+.typer.on { display: flex }
+.typer input { flex: 1; border: 0; outline: 0; background: none; font: 400 15px Sora; padding: 0 14px; min-width: 0 }
+.typer button { width: 44px; height: 44px; border-radius: 22px; background: var(--grad); color: #fff; font: 600 18px Sora }
+
+.toast { position: absolute; left: 50%; top: 18px; transform: translate(-50%, -20px); opacity: 0; background: var(--ink); color: #fff; font: 400 13px Sora; padding: 10px 16px; border-radius: 20px; transition: .3s; pointer-events: none; white-space: nowrap; max-width: 92%; overflow: hidden; text-overflow: ellipsis }
+.toast.on { opacity: 1; transform: translate(-50%, 0) }
+
+@media (max-height: 740px) {
+  .top { min-height: 104px }
+  .greet { font-size: 30px }
+  .greet { font-size: 28px }
+  .hero { min-height: 150px }
+  .gt { min-height: 124px; padding: 14px }
+  .gt .big { font-size: 24px }
+  .gt img.obj { transform: scale(.82); transform-origin: top right }
+}

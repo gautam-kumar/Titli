@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F2F1F5">
+<title>Titli</title>
+<meta name="description" content="Bolo, aur Titli yaad rakhegi. Paise, kaagaz aur zaroori baatein, Hindi ya Hinglish mein.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;500&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="aura" aria-hidden="true"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div>
+<main class="app" id="app" data-mode="home">
+  <header class="top">
+    <div class="meta"><span id="metaLeft"></span><span id="metaRight"></span></div>
+    <button class="back" id="back" aria-label="Wapas">‹ Wapas</button>
+    <h1 class="greet" id="greet"></h1>
+  </header>
+
+  <section class="hero" aria-label="Titli">
+    <canvas id="heroCanvas"></canvas>
+    <div class="hero-tags" id="heroTags"></div>
+    <div class="hero-cap"><span id="capLeft"></span><span id="capRight"></span></div>
+  </section>
+
+  <section class="tiles" id="tiles"></section>
+
+  <footer class="dock">
+    <button class="type" id="typeBtn" aria-label="Likh kar batayein">Aa</button>
+    <button class="pill" id="pill"><span class="pill-label" id="pillLabel">Chhuo aur bolo</span><span class="wave" id="wave"></span><span class="orb" id="orb"></span></button>
+  </footer>
+
+  <form class="typer" id="typer" autocomplete="off">
+    <input id="typeInput" placeholder="Jaise: Ramesh ko 2000 diye, Diwali tak" enterkeyhint="send">
+    <button type="submit" aria-label="Bhejein">↑</button>
+  </form>
+  <div class="toast" id="toast"></div>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>
