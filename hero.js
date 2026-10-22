@@ -2,8 +2,12 @@
 import * as THREE from './vendor/three.module.min.js';
 import { RoomEnvironment } from './vendor/RoomEnvironment.js';
 
-const STOPS = ['#00C2FF', '#7B61FF', '#FF4FA3', '#FFB547'].map(c => new THREE.Color(c));
-export const KIND_COLOR = { give: 0xff4fa3, take: 0x00c2ff, doc: 0x7b61ff, remind: 0xffb547, note: 0x9d8bff };
+// the active colour theme (see themes.js); the trail runs c3 → c2 → c1 → c4
+let STOPS = [], KIND_COLOR = {};
+function useTheme(t) {
+  STOPS = [t.c3, t.c2, t.c1, t.c4].map(c => new THREE.Color(c));
+  KIND_COLOR = { give: t.c1, take: t.c3, doc: t.c2, remind: t.c4, note: t.note };
+}
 
 function canvasTex(w, h, draw) {
   const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
@@ -14,27 +18,29 @@ function shadowBlob(r, op, col) {
   const m = new THREE.Mesh(new THREE.PlaneGeometry(r * 2, r * 2), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false })); m.rotation.x = -Math.PI / 2; return m;
 }
 
-function buildButterfly() {
+const rgba = (hex, a) => `rgba(${[1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)).join(',')},${a})`;
+
+function buildButterfly(theme) {
   const fore = new THREE.Shape(); fore.moveTo(.04, .06); fore.bezierCurveTo(.25, .55, .7, 1.02, 1.12, .98); fore.bezierCurveTo(1.32, .95, 1.36, .7, 1.22, .5); fore.bezierCurveTo(1.0, .2, .55, .02, .06, -.04); fore.lineTo(.04, .06);
   const hind = new THREE.Shape(); hind.moveTo(.05, -.02); hind.bezierCurveTo(.5, .02, .92, -.12, .95, -.42); hind.bezierCurveTo(.98, -.72, .75, -.98, .48, -.95); hind.bezierCurveTo(.3, -.93, .22, -.8, .17, -.62); hind.bezierCurveTo(.12, -.42, .06, -.22, .04, -.08);
   const X0 = -.05, X1 = 1.4, Y0 = -1.05, Y1 = 1.1;
-  const tex = canvasTex(1024, 1536, (x, w, h) => {
+  const wingTex = t => canvasTex(1024, 1536, (x, w, h) => {
     const P = (a, b) => [(a - X0) / (X1 - X0) * w, (Y1 - b) / (Y1 - Y0) * h];
     const outline = sh => { x.beginPath(); sh.getPoints(80).forEach((pt, i) => { const [a, b] = P(pt.x, pt.y); i ? x.lineTo(a, b) : x.moveTo(a, b) }); x.closePath() };
     const draw = (sh, stops) => {
       x.save(); outline(sh); x.clip();
       const [bx, by] = P(0, 0); const g = x.createRadialGradient(bx, by, 10, bx, by, w); stops.forEach(([o, c]) => g.addColorStop(o, c)); x.fillStyle = g; x.fillRect(0, 0, w, h);
-      const g2 = x.createLinearGradient(0, 0, w, h); g2.addColorStop(0, 'rgba(0,194,255,0)'); g2.addColorStop(.45, 'rgba(0,194,255,.28)'); g2.addColorStop(.6, 'rgba(255,255,255,.18)'); g2.addColorStop(1, 'rgba(255,181,71,0)'); x.fillStyle = g2; x.fillRect(0, 0, w, h);
-      x.strokeStyle = 'rgba(40,20,90,.35)'; x.lineWidth = 3;
+      const g2 = x.createLinearGradient(0, 0, w, h); g2.addColorStop(0, rgba(t.c3, 0)); g2.addColorStop(.45, rgba(t.c3, .28)); g2.addColorStop(.6, 'rgba(255,255,255,.18)'); g2.addColorStop(1, rgba(t.c4, 0)); x.fillStyle = g2; x.fillRect(0, 0, w, h);
+      x.strokeStyle = `rgba(${t.shadow},.35)`; x.lineWidth = 3;
       for (let k = 0; k < 7; k++) { const a = -1.1 + k * .36; x.beginPath(); x.moveTo(bx, by); x.quadraticCurveTo(bx + Math.cos(a) * w * .35, by - Math.sin(a) * h * .25, bx + Math.cos(a) * w * 1.2, by - Math.sin(a) * h * .9); x.stroke() }
-      x.restore(); outline(sh); x.lineWidth = 26; x.strokeStyle = 'rgba(30,16,60,.9)'; x.stroke(); x.lineWidth = 6; x.strokeStyle = 'rgba(255,255,255,.5)'; x.stroke();
+      x.restore(); outline(sh); x.lineWidth = 26; x.strokeStyle = rgba(t.body, .9); x.stroke(); x.lineWidth = 6; x.strokeStyle = 'rgba(255,255,255,.5)'; x.stroke();
     };
-    draw(fore, [[0, '#3b1fa8'], [.25, '#7B61FF'], [.55, '#FF4FA3'], [.85, '#FFB547'], [1, '#ffd27a']]);
-    draw(hind, [[0, '#3b1fa8'], [.25, '#5b6bff'], [.5, '#00C2FF'], [.8, '#FF4FA3'], [1, '#FFB547']]);
+    draw(fore, [[0, t.wing[0]], [.25, t.c2], [.55, t.c1], [.85, t.c4], [1, t.wing[2]]]);
+    draw(hind, [[0, t.wing[0]], [.25, t.wing[1]], [.5, t.c3], [.8, t.c1], [1, t.c4]]);
     x.fillStyle = 'rgba(255,255,255,.9)';
     for (const [a, b, r] of [[1.12, .82, .035], [1.02, .9, .025], [1.2, .66, .028], [.8, -.78, .03]]) { const [px, py] = P(a, b); x.beginPath(); x.arc(px, py, r * w / (X1 - X0), 0, 7); x.fill() }
   });
-  const mat = new THREE.MeshPhysicalMaterial({ map: tex, side: THREE.DoubleSide, transparent: true, roughness: .35, clearcoat: .7, clearcoatRoughness: .2, iridescence: .35, iridescenceIOR: 1.4, envMapIntensity: .55 });
+  const mat = new THREE.MeshPhysicalMaterial({ map: wingTex(theme), side: THREE.DoubleSide, transparent: true, roughness: .35, clearcoat: .7, clearcoatRoughness: .2, iridescence: .35, iridescenceIOR: 1.4, envMapIntensity: .55 });
   const wingGeo = sh => {
     const g = new THREE.ShapeGeometry(sh, 48), P = g.attributes.position, uv = g.attributes.uv;
     for (let i = 0; i < P.count; i++) { const a = P.getX(i), b = P.getY(i); uv.setXY(i, (a - X0) / (X1 - X0), (b - Y0) / (Y1 - Y0)); P.setZ(i, .12 * a * a - .04 * b * b) }
@@ -43,7 +49,7 @@ function buildButterfly() {
   const half = () => { const g = new THREE.Group(); const f = new THREE.Mesh(wingGeo(fore), mat), h = new THREE.Mesh(wingGeo(hind), mat); h.position.z = -.01; g.add(f, h); return g };
   const R = half(), L = half(); L.scale.x = -1;
   const b = new THREE.Group(); b.add(R, L);
-  const dark = new THREE.MeshPhysicalMaterial({ color: 0x1b1233, roughness: .3, clearcoat: 1, iridescence: .6 });
+  const dark = new THREE.MeshPhysicalMaterial({ color: theme.body, roughness: .3, clearcoat: 1, iridescence: .6 });
   b.add(new THREE.Mesh(new THREE.LatheGeometry([[0, -.62], [.025, -.58], [.045, -.4], [.05, -.15], [.04, 0], [.058, .1], [.06, .18], [.04, .24], [0, .26]].map(([a, c]) => new THREE.Vector2(a, c)), 32), dark));
   const head = new THREE.Mesh(new THREE.SphereGeometry(.08, 32, 24), dark); head.position.y = .3; head.scale.setScalar(.75); b.add(head);
   for (const sx of [1, -1]) {
@@ -51,7 +57,7 @@ function buildButterfly() {
     b.add(new THREE.Mesh(new THREE.TubeGeometry(c, 24, .009, 8), dark));
     const tip = new THREE.Mesh(new THREE.SphereGeometry(.03, 16, 12), dark); tip.position.copy(c.getPoint(1)); b.add(tip);
   }
-  return { group: b, R, L };
+  return { group: b, R, L, mat, dark, wingTex };
 }
 
 function ribbon(path, off, width, twist, op) {
@@ -74,28 +80,32 @@ function ribbon(path, off, width, twist, op) {
   const mesh = new THREE.Mesh(g, m); mesh.renderOrder = 5; return mesh;
 }
 
-export function createHero(canvas, labelLayer) {
+export function createHero(canvas, labelLayer, theme) {
+  useTheme(theme);
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1)); renderer.toneMapping = THREE.ACESFilmicToneMapping;
   const scene = new THREE.Scene();
   scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(renderer), .04).texture;
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xd9ccff, .8));
+  const hemi = new THREE.HemisphereLight(0xffffff, theme.hemi, .8); scene.add(hemi);
   const key = new THREE.DirectionalLight(0xffffff, 1.5); key.position.set(-3, 5, 4); scene.add(key);
-  const rim = new THREE.DirectionalLight(0xffc6ef, 1.0); rim.position.set(3, 1, -3); scene.add(rim);
+  const rim = new THREE.DirectionalLight(theme.rim, 1.0); rim.position.set(3, 1, -3); scene.add(rim);
   const camera = new THREE.PerspectiveCamera(30, 1, .1, 100);
 
-  const bf = buildButterfly(); const bfly = bf.group;
+  const bf = buildButterfly(theme); const bfly = bf.group;
   bfly.rotation.set(.55, .3, -.42); bfly.scale.setScalar(.7); bfly.position.set(.12, .18, 0); scene.add(bfly);
   const trailPts = [[-2.5, -.9, .4], [-1.8, .1, .7], [-1.0, -.7, 1.0], [-.2, -.8, .8], [.2, -.35, .3], [.2, .08, 0]].map(p => new THREE.Vector3(...p));
   const path = new THREE.CatmullRomCurve3(trailPts, false, 'catmullrom', .5);
-  const ribbons = [[0, .9, .9, .6], [1.5, .6, 1.1, .5], [2.9, .4, .7, .6], [4.1, 1.3, .5, .16]].map(a => { const m = ribbon(path, ...a); scene.add(m); return m });
+  const RIB = [[0, .9, .9, .6], [1.5, .6, 1.1, .5], [2.9, .4, .7, .6], [4.1, 1.3, .5, .16]];
+  let ribbons = RIB.map(a => { const m = ribbon(path, ...a); scene.add(m); return m });
   const shadow = shadowBlob(1.1, .22, '70,40,140'); shadow.position.y = -1.25; scene.add(shadow);
 
   // pearls for memories along the trail
   const pearlGroup = new THREE.Group(); scene.add(pearlGroup);
   let pearls = [], labels = [], mode = 'home', big = null;
   const pearlMat = c => new THREE.MeshPhysicalMaterial({ color: c, roughness: .1, clearcoat: 1, iridescence: .5, depthTest: false });
+  let lastMems = [];
   function setMemories(mems) {
+    lastMems = mems;
     pearlGroup.clear(); pearls = []; labelLayer.innerHTML = ''; labels = [];
     const ts = [.62, .22, .42, .08, .32];
     mems.slice(0, 5).forEach((m, i) => {
@@ -106,8 +116,9 @@ export function createHero(canvas, labelLayer) {
       if (i < 2) { const e = document.createElement('div'); e.className = 'tag'; e.innerHTML = `<b>${m.title}</b><span>${m.sub}</span>`; labelLayer.appendChild(e); labels.push({ e, mesh, dy: i === 0 ? 34 : -30 }) }
     });
   }
+  let lastFocus = null;
   function setMode(m, focusMem) {
-    mode = m;
+    mode = m; lastFocus = focusMem;
     if (big) { scene.remove(big); big = null }
     if (m === 'answer' && focusMem) {
       const c = KIND_COLOR[focusMem.kind] || KIND_COLOR.note;
@@ -153,5 +164,14 @@ export function createHero(canvas, labelLayer) {
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-  return { setMemories, setMode };
+  function setTheme(t) {
+    useTheme(t);
+    hemi.groundColor.set(t.hemi); rim.color.set(t.rim); bf.dark.color.set(t.body);
+    bf.mat.map.dispose(); bf.mat.map = bf.wingTex(t); bf.mat.needsUpdate = true;
+    ribbons.forEach(r => { scene.remove(r); r.geometry.dispose(); r.material.dispose() });
+    ribbons = RIB.map(a => { const m = ribbon(path, ...a); scene.add(m); return m });
+    setMemories(lastMems);
+    setMode(mode, lastFocus);
+  }
+  return { setMemories, setMode, setTheme };
 }

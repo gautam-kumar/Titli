@@ -1,7 +1,8 @@
 // Offline shell: serve from cache, refresh in the background.
-const C = 'titli-v1';
-const FILES = ['./', 'index.html', 'styles.css', 'app.js', 'brain.js', 'hero.js', 'vendor/three.module.min.js', 'vendor/RoomEnvironment.js', 'manifest.webmanifest',
-  ...['ring', 'gas', 'card', 'pPink', 'pViolet', 'pCyan', 'diya', 'play', 'icon'].map(n => `assets/${n}.png`)];
+const C = 'titli-v2';
+const FILES = ['./', 'index.html', 'styles.css', 'app.js', 'brain.js', 'hero.js', 'vendor/three.module.min.js', 'vendor/RoomEnvironment.js', 'manifest.webmanifest', 'themes.js',
+  ...['ring', 'gas', 'card', 'pPink', 'pViolet', 'pCyan', 'diya', 'play', 'icon'].map(n => `assets/${n}.png`),
+  ...['neel', 'kesar', 'mor'].flatMap(t => ['ring', 'gas', 'card', 'pPink', 'pViolet', 'pCyan', 'play'].map(n => `assets/${t}/${n}.png`))];
 self.addEventListener('install', e => e.waitUntil(caches.open(C).then(c => c.addAll(FILES)).then(() => self.skipWaiting())));
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', e => {

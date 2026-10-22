@@ -33,9 +33,9 @@ struct HeroCard: View {
                 }
             }
         }
-        .background(LinearGradient(colors: [Color(hex: 0xFBFAF7), Color(hex: 0xF1ECF7)], startPoint: .top, endPoint: .bottom))
+        .background(LinearGradient(colors: [Color(hex: 0xFBFAF7), Theme.card], startPoint: .top, endPoint: .bottom))
         .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .shadow(color: Color(red: 90 / 255, green: 60 / 255, blue: 160 / 255).opacity(0.35), radius: 20, y: 18)
+        .shadow(color: Theme.shadow.opacity(0.35), radius: 20, y: 18)
         .animation(.easeInOut(duration: 0.3), value: mode)
     }
 }

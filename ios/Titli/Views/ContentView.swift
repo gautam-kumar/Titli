@@ -20,6 +20,8 @@ struct ContentView: View {
     @State private var toast: String?
     @State private var demoTranscript: String?
     @State private var savedCount = 0
+    @State private var themeID = Palette.active.id
+    @State private var showThemes = false
     @FocusState private var typerFocused: Bool
     @Environment(\.openURL) private var openURL
 
@@ -27,7 +29,7 @@ struct ContentView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            Aura()
+            Aura().id(themeID)
             VStack(spacing: 10) {
                 header
                 HeroCard(memories: store.memories, mode: screen.hero, focus: focusMemory, capLeft: capLeft, capRight: capRight)
@@ -39,6 +41,7 @@ struct ContentView: View {
             }
             .padding(.horizontal, 12)
             .padding(.bottom, 6)
+            .id(themeID)
             if typing { typer.padding(.horizontal, 12).padding(.bottom, 82).transition(.move(edge: .bottom).combined(with: .opacity)) }
         }
         .overlay(alignment: .top) {
@@ -56,6 +59,20 @@ struct ContentView: View {
         .sensoryFeedback(.success, trigger: savedCount)
         .sensoryFeedback(.impact(weight: .medium), trigger: voice.listening)
         .onAppear(perform: demo)
+        .sheet(isPresented: $showThemes) {
+            ThemePicker(current: themeID, pick: pickTheme)
+                .presentationDetents([.height(300)])
+                .presentationCornerRadius(28)
+                .presentationBackground(.regularMaterial)
+        }
+    }
+
+    private func pickTheme(_ p: Palette) {
+        Palette.active = p
+        UserDefaults.standard.set(p.id, forKey: Palette.storageKey)
+        showThemes = false
+        withAnimation(.easeInOut(duration: 0.35)) { themeID = p.id }
+        show("\(p.name) rang laga diya")
     }
 
     // MARK: header
@@ -67,6 +84,10 @@ struct ContentView: View {
                 Spacer()
                 if screen == .home || screen == .listen {
                     Text("Hindi · Hinglish").font(.sora(12)).foregroundStyle(Theme.mute)
+                    if screen == .home {
+                        Button { showThemes = true } label: { Swatch(palette: Palette.active, size: 20).overlay(Circle().strokeBorder(.white, lineWidth: 2)) }
+                            .accessibilityLabel("Rang badlein")
+                    }
                 } else {
                     Button("‹ Wapas") { goHome() }.font(.sora(12, .medium)).foregroundStyle(Theme.mute)
                 }
@@ -286,15 +307,19 @@ struct ContentView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.4) { if toast == t { toast = nil } }
     }
 
-    /// Launch arguments used by the CI screenshots: -screen listen|saved|answer|doc
+    /// Launch arguments used by the CI screenshots: -screen listen|saved|answer|doc|themes, -theme neel|kesar|mor|gulaal
     private func demo() {
         let args = ProcessInfo.processInfo.arguments
+        if let t = args.firstIndex(of: "-theme"), t + 1 < args.count {
+            Palette.active = Palette.named(args[t + 1]); themeID = Palette.active.id
+        }
         guard let i = args.firstIndex(of: "-screen"), i + 1 < args.count else { return }
         switch args[i + 1] {
         case "listen": demoTranscript = "Maine Ramesh bhaiya ko do hazaar diye, Diwali tak lautayenge"; screen = .listen
         case "saved": handle("Maine Sunita didi ko 500 diye, Holi tak")
         case "answer": handle("Ramesh ko kitna diya tha?")
         case "doc": handle("आधार कार्ड कहाँ रखा है?")
+        case "themes": showThemes = true
         default: break
         }
     }
@@ -321,5 +346,48 @@ struct Waveform: View {
             }
             .frame(height: 30)
         }
+    }
+}
+
+/// A little ball of the theme's four colours.
+struct Swatch: View {
+    var palette: Palette
+    var size: CGFloat
+    var body: some View {
+        Circle()
+            .fill(AngularGradient(colors: [palette.c1, palette.c2, palette.c3, palette.c4, palette.c1].map { Color(hex: $0) }, center: .center, angle: .degrees(200)))
+            .overlay(Circle().fill(RadialGradient(colors: [.white.opacity(0.45), .clear], center: UnitPoint(x: 0.35, y: 0.3), startRadius: 0, endRadius: size * 0.6)))
+            .frame(width: size, height: size)
+            .shadow(color: Color(hex: palette.shadow).opacity(0.35), radius: 4, y: 2)
+    }
+}
+
+struct ThemePicker: View {
+    var current: String
+    var pick: (Palette) -> Void
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Titli ka rang").font(.sora(20, .medium)).tracking(-0.4).foregroundStyle(Theme.ink)
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                ForEach(Palette.all) { p in
+                    Button { pick(p) } label: {
+                        HStack(spacing: 12) {
+                            Swatch(palette: p, size: 44)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(p.name).font(.jakarta(15, .bold)).foregroundStyle(Theme.ink)
+                                Text(p.mood).font(.jakarta(11.5, .semibold)).foregroundStyle(Theme.mute).lineLimit(1)
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .padding(12)
+                        .background(.white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(p.id == current ? Theme.ink : Theme.line, lineWidth: p.id == current ? 2 : 1))
+                    }
+                    .buttonStyle(PressStyle())
+                }
+            }
+        }
+        .padding(.horizontal, 16).padding(.top, 24)
+        .frame(maxHeight: .infinity, alignment: .top)
     }
 }

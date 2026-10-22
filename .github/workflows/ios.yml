@@ -60,12 +60,15 @@ jobs:
           APP=$(find build/Build/Products -name "Titli.app" -maxdepth 3 | head -1)
           xcrun simctl install "$UDID" "$APP"
           mkdir -p shots
-          for s in home listen saved answer doc; do
+          shot() { # name, then launch arguments
+            local name=$1; shift
             xcrun simctl terminate "$UDID" com.gautamkumar.titli || true
-            xcrun simctl launch "$UDID" com.gautamkumar.titli -reset -quiet -screen $s
+            xcrun simctl launch "$UDID" com.gautamkumar.titli -reset -quiet "$@"
             sleep 8
-            xcrun simctl io "$UDID" screenshot "shots/$s.png"
-          done
+            xcrun simctl io "$UDID" screenshot "shots/$name.png"
+          }
+          for s in home listen saved answer doc themes; do shot $s -theme neel -screen $s; done
+          for t in kesar mor gulaal; do shot home-$t -theme $t -screen home; done
           xcrun simctl spawn "$UDID" log show --last 3m --predicate 'process == "Titli"' --style compact > shots/app.log 2>/dev/null || true
 
       - uses: actions/upload-artifact@v4

@@ -18,7 +18,7 @@ struct ObjectTile<Bottom: View>: View {
         GlassTile(glow: glow, minHeight: height) {
             ZStack(alignment: .topLeading) {
                 if let image {
-                    Image(image).resizable().scaledToFit().frame(width: imageWidth)
+                    Image(Theme.img(image)).resizable().scaledToFit().frame(width: imageWidth)
                         .offset(imageOffset)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: imageAtBottom ? .bottomTrailing : .topTrailing)
                         .allowsHitTesting(false)
@@ -53,7 +53,7 @@ struct HomeTiles: View {
                     }
                 }
                 Button { if let next { open(next) } } label: {
-                    ObjectTile(glow: Theme.violet, label: next?.sub ?? "Yaad dilana", labelColor: Color(hex: 0x6A55D8), image: "gas", imageWidth: 74, imageOffset: CGSize(width: 12, height: -10)) {
+                    ObjectTile(glow: Theme.violet, label: next?.sub ?? "Yaad dilana", labelColor: Theme.deep, image: "gas", imageWidth: 74, imageOffset: CGSize(width: 12, height: -10)) {
                         Text(next?.title ?? "“Kal 10 baje bijli bill bharna”")
                             .font(.jakarta(16, .extraBold)).tracking(-0.3).lineLimit(2)
                             .foregroundStyle(next == nil ? Theme.mute : Theme.ink)
@@ -92,7 +92,7 @@ struct HomeTiles: View {
         return Format.short(m.dueDate ?? m.created)
     }
     private func color(_ m: Memory) -> Color {
-        m.kind == .give ? Color(hex: 0xE0336F) : m.kind == .take ? Color(hex: 0x1F8F8A) : Theme.mute
+        m.kind == .give ? Theme.give : m.kind == .take ? Color(hex: 0x1F8F8A) : Theme.mute
     }
 }
 
@@ -139,7 +139,7 @@ struct MemoryTiles: View {
                     }
                 }
             case .remind:
-                ObjectTile(glow: Theme.violet, label: m.sub, labelColor: Color(hex: 0x6A55D8), image: "gas", imageWidth: 84, imageOffset: CGSize(width: 6, height: -8)) {
+                ObjectTile(glow: Theme.violet, label: m.sub, labelColor: Theme.deep, image: "gas", imageWidth: 84, imageOffset: CGSize(width: 6, height: -8)) {
                     Text((m.what ?? "").isEmpty ? m.raw : m.what!).font(.jakarta(20, .extraBold)).tracking(-0.4).foregroundStyle(Theme.ink).lineLimit(2).padding(.trailing, 90)
                 }
             case .note:
@@ -160,7 +160,7 @@ struct AnswerTiles: View {
             if answer.kind == .money, let person = answer.person {
                 GlassTile(glow: Theme.pink, minHeight: 0) {
                     ZStack(alignment: .topTrailing) {
-                        Image("ring").resizable().scaledToFit().frame(width: 100).offset(x: 8, y: -14)
+                        Image(Theme.img("ring")).resizable().scaledToFit().frame(width: 100).offset(x: 8, y: -14)
                         VStack(alignment: .leading, spacing: 0) {
                             Label12(text: answer.net >= 0 ? "\(person) · baaki" : "\(person) ko dene hain")
                             Text(Format.inr(answer.net)).font(.sora(46, .extraLight)).tracking(-2.3).foregroundStyle(Theme.ink).padding(.top, 8)
@@ -196,7 +196,7 @@ struct AnswerTiles: View {
                 GlassTile(glow: Theme.violet, minHeight: 0) {
                     HStack(spacing: 12) {
                         ZStack {
-                            Image("play").resizable().frame(width: 48, height: 48)
+                            Image(Theme.img("play")).resizable().frame(width: 48, height: 48)
                             Image(systemName: "play.fill").font(.system(size: 15)).foregroundStyle(.white).offset(x: 1)
                         }
                         VStack(alignment: .leading, spacing: 3) {

@@ -7,11 +7,11 @@ import TitliCore
 
 enum HeroMode: Equatable { case home, listen, answer }
 
-let kindColor: [Memory.Kind: UIColor] = [
-    .give: UIColor(hex: 0xFF4FA3), .take: UIColor(hex: 0x00C2FF), .doc: UIColor(hex: 0x7B61FF),
-    .remind: UIColor(hex: 0xFFB547), .note: UIColor(hex: 0x9D8BFF),
-]
-private let stops = [0x00C2FF, 0x7B61FF, 0xFF4FA3, 0xFFB547].map { SIMD3<Float>(UIColor(hex: $0).rgb) }
+private func kindColor(_ k: Memory.Kind) -> UIColor {
+    let p = Palette.active
+    switch k { case .give: return UIColor(hex: p.c1); case .take: return UIColor(hex: p.c3); case .doc: return UIColor(hex: p.c2); case .remind: return UIColor(hex: p.c4); case .note: return UIColor(hex: p.note) }
+}
+
 
 final class HeroScene: NSObject, SCNSceneRendererDelegate {
     let scene = SCNScene()
@@ -54,9 +54,9 @@ final class HeroScene: NSObject, SCNSceneRendererDelegate {
         let key = SCNNode(); key.light = SCNLight(); key.light!.type = .directional; key.light!.intensity = 1300
         key.simdPosition = [-3, 5, 4]; key.simdLook(at: .zero); scene.rootNode.addChildNode(key)
         let rim = SCNNode(); rim.light = SCNLight(); rim.light!.type = .directional; rim.light!.intensity = 800
-        rim.light!.color = UIColor(hex: 0xFFC6EF); rim.simdPosition = [3, 1, -3]; rim.simdLook(at: .zero); scene.rootNode.addChildNode(rim)
+        rim.light!.color = UIColor(hex: Palette.active.rim); rim.simdPosition = [3, 1, -3]; rim.simdLook(at: .zero); scene.rootNode.addChildNode(rim)
         let amb = SCNNode(); amb.light = SCNLight(); amb.light!.type = .ambient; amb.light!.intensity = 300
-        amb.light!.color = UIColor(hex: 0xE9E1FF); scene.rootNode.addChildNode(amb)
+        amb.light!.color = UIColor(hex: Palette.active.hemi); scene.rootNode.addChildNode(amb)
 
         buildButterfly()
         let params: [(Float, Float, Float, Float)] = [(0, 0.9, 0.9, 0.6), (1.5, 0.6, 1.1, 0.5), (2.9, 0.4, 0.7, 0.6), (4.1, 1.3, 0.5, 0.16)]
@@ -90,6 +90,7 @@ final class HeroScene: NSObject, SCNSceneRendererDelegate {
         let sx: CGFloat = w / (x1 - x0), sy: CGFloat = h / (y1 - y0)
         let toPx = CGAffineTransform(a: sx, b: 0, c: 0, d: -sy, tx: -x0 * sx, ty: y1 * sy)
         let fmt = UIGraphicsImageRendererFormat(); fmt.scale = 1; fmt.opaque = false
+        let pal = Palette.active
         let tex = UIGraphicsImageRenderer(size: CGSize(width: w, height: h), format: fmt).image { ctx in
             let g = ctx.cgContext, space = CGColorSpaceCreateDeviceRGB()
             let root = CGPoint(x: 0, y: 0).applying(toPx)
@@ -98,9 +99,9 @@ final class HeroScene: NSObject, SCNSceneRendererDelegate {
                 g.saveGState(); p.addClip()
                 let rad = CGGradient(colorsSpace: space, colors: st.map { UIColor(hex: $0.1).cgColor } as CFArray, locations: st.map { $0.0 })!
                 g.drawRadialGradient(rad, startCenter: root, startRadius: 10, endCenter: root, endRadius: w, options: [.drawsAfterEndLocation])
-                let sheen = CGGradient(colorsSpace: space, colors: [UIColor(hex: 0x00C2FF, a: 0), UIColor(hex: 0x00C2FF, a: 0.28), UIColor(white: 1, alpha: 0.18), UIColor(hex: 0xFFB547, a: 0)].map(\.cgColor) as CFArray, locations: [0, 0.45, 0.6, 1])!
+                let sheen = CGGradient(colorsSpace: space, colors: [UIColor(hex: pal.c3, a: 0), UIColor(hex: pal.c3, a: 0.28), UIColor(white: 1, alpha: 0.18), UIColor(hex: pal.c4, a: 0)].map(\.cgColor) as CFArray, locations: [0, 0.45, 0.6, 1])!
                 g.drawLinearGradient(sheen, start: .zero, end: CGPoint(x: w, y: h), options: [])
-                g.setStrokeColor(UIColor(red: 40 / 255, green: 20 / 255, blue: 90 / 255, alpha: 0.35).cgColor); g.setLineWidth(3)
+                g.setStrokeColor(UIColor(hex: pal.shadow, a: 0.35).cgColor); g.setLineWidth(3)
                 for k in 0..<7 {
                     let a = -1.1 + CGFloat(k) * 0.36
                     g.move(to: root)
@@ -108,11 +109,11 @@ final class HeroScene: NSObject, SCNSceneRendererDelegate {
                     g.strokePath()
                 }
                 g.restoreGState()
-                p.lineWidth = 26; UIColor(red: 30 / 255, green: 16 / 255, blue: 60 / 255, alpha: 0.9).setStroke(); p.stroke()
+                p.lineWidth = 26; UIColor(hex: pal.body, a: 0.9).setStroke(); p.stroke()
                 p.lineWidth = 6; UIColor(white: 1, alpha: 0.5).setStroke(); p.stroke()
             }
-            draw(fore, [(0, 0x3B1FA8), (0.25, 0x7B61FF), (0.55, 0xFF4FA3), (0.85, 0xFFB547), (1, 0xFFD27A)])
-            draw(hind, [(0, 0x3B1FA8), (0.25, 0x5B6BFF), (0.5, 0x00C2FF), (0.8, 0xFF4FA3), (1, 0xFFB547)])
+            draw(fore, [(0, pal.wing[0]), (0.25, pal.c2), (0.55, pal.c1), (0.85, pal.c4), (1, pal.wing[2])])
+            draw(hind, [(0, pal.wing[0]), (0.25, pal.wing[1]), (0.5, pal.c3), (0.8, pal.c1), (1, pal.c4)])
             UIColor(white: 1, alpha: 0.9).setFill()
             for (a, b, r) in [(1.12, 0.82, 0.035), (1.02, 0.9, 0.025), (1.2, 0.66, 0.028), (0.8, -0.78, 0.03)] as [(CGFloat, CGFloat, CGFloat)] {
                 let c = CGPoint(x: a, y: b).applying(toPx), rr = r * w / (x1 - x0)
@@ -166,7 +167,7 @@ final class HeroScene: NSObject, SCNSceneRendererDelegate {
 
         let dark = SCNMaterial()
         dark.lightingModel = .physicallyBased
-        dark.diffuse.contents = UIColor(hex: 0x1B1233)
+        dark.diffuse.contents = UIColor(hex: Palette.active.body)
         dark.roughness.contents = 0.3
         dark.clearCoat.contents = 1.0
         let abdomen = SCNNode(geometry: SCNCapsule(capRadius: 0.048, height: 0.82)); abdomen.position.y = -0.2
@@ -191,6 +192,8 @@ final class HeroScene: NSObject, SCNSceneRendererDelegate {
     }
 
     private func ribbon(off: Float, width: Float, twist: Float, op: Float) -> SCNNode {
+        let pal = Palette.active
+        let stops = [pal.c3, pal.c2, pal.c1, pal.c4].map { SIMD3<Float>(UIColor(hex: $0).rgb) }
         let n = 240, m = 18, up = SIMD3<Float>(0, 1, 0)
         var pos: [SCNVector3] = [], col: [SIMD4<Float>] = [], uv: [CGPoint] = [], idx: [Int32] = []
         for i in 0...n {
@@ -238,7 +241,7 @@ final class HeroScene: NSObject, SCNSceneRendererDelegate {
         float shimmer = 0.85 + 0.15 * sin(uv.x * 30.0 - tm * 3.0);
         float al = op * pow(max(e, 0.0), 0.9) * strand * fade * shimmer;
         float g = uv.x * 2.999;
-        float3 c0 = float3(0.0, 0.761, 1.0), c1 = float3(0.482, 0.380, 1.0), c2 = float3(1.0, 0.310, 0.639), c3 = float3(1.0, 0.710, 0.278);
+        float3 c0 = \(Self.metal(stops[0])), c1 = \(Self.metal(stops[1])), c2 = \(Self.metal(stops[2])), c3 = \(Self.metal(stops[3]));
         float3 col = g < 1.0 ? mix(c0, c1, g) : (g < 2.0 ? mix(c1, c2, g - 1.0) : mix(c2, c3, g - 2.0));
         // SceneKit blends in linear space: convert the sRGB aurora stops first
         col = pow(col, float3(2.2));
@@ -261,7 +264,7 @@ final class HeroScene: NSObject, SCNSceneRendererDelegate {
         pearls = []
         let ts: [Float] = [0.62, 0.22, 0.42, 0.08, 0.32]
         for (i, m) in mems.prefix(5).enumerated() {
-            let c = kindColor[m.kind] ?? kindColor[.note]!, s: CGFloat = i == 0 ? 0.1 : 0.08
+            let c = kindColor(m.kind), s: CGFloat = i == 0 ? 0.1 : 0.08
             let node = SCNNode(geometry: SCNSphere(radius: s))
             node.geometry!.firstMaterial = Self.pearl(c)
             node.renderingOrder = 6
@@ -279,7 +282,7 @@ final class HeroScene: NSObject, SCNSceneRendererDelegate {
         mode = m
         big?.removeFromParentNode(); big = nil
         if m == .answer, let f = focus {
-            let c = kindColor[f.kind] ?? kindColor[.note]!
+            let c = kindColor(f.kind)
             let b = SCNNode(geometry: SCNSphere(radius: 0.42)); b.geometry!.firstMaterial = Self.pearl(c)
             b.position = SCNVector3(1.1, -0.1, 0.6)
             let ring = SCNNode(geometry: SCNTorus(ringRadius: 0.62, pipeRadius: 0.006)); ring.geometry!.firstMaterial = Self.flat(c.withAlphaComponent(0.6))
@@ -350,6 +353,7 @@ final class HeroScene: NSObject, SCNSceneRendererDelegate {
 
     // MARK: helpers
 
+    private static func metal(_ v: SIMD3<Float>) -> String { String(format: "float3(%.3f, %.3f, %.3f)", v.x, v.y, v.z) }
     private static func pearl(_ c: UIColor) -> SCNMaterial {
         let m = SCNMaterial()
         m.lightingModel = .physicallyBased
@@ -411,7 +415,7 @@ final class HeroScene: NSObject, SCNSceneRendererDelegate {
     private static func environmentImage() -> UIImage {
         UIGraphicsImageRenderer(size: CGSize(width: 512, height: 256)).image { ctx in
             let g = ctx.cgContext
-            let grad = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [UIColor.white.cgColor, UIColor(hex: 0xF4F0FA).cgColor, UIColor(hex: 0xC9BCEB).cgColor] as CFArray, locations: [0, 0.5, 1])!
+            let grad = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [UIColor.white.cgColor, UIColor(hex: 0xF4F0FA).cgColor, UIColor(hex: Palette.active.hemi).cgColor] as CFArray, locations: [0, 0.5, 1])!
             g.drawLinearGradient(grad, start: .zero, end: CGPoint(x: 0, y: 256), options: [])
             UIColor.white.setFill()
             g.fill(CGRect(x: 60, y: 40, width: 90, height: 50))
