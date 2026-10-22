@@ -9,11 +9,11 @@ struct Palette: Equatable, Identifiable {
     let c1: Int, c2: Int, c3: Int, c4: Int, deep: Int, give: Int, bg: Int, card: Int, shadow: Int
     let wing: [Int], body: Int, rim: Int, hemi: Int, note: Int
 
-    static let neel = Palette(id: "neel", name: "Neel", mood: "Neela, shaant", c1: 0x2F6BFF, c2: 0x3341C7, c3: 0x14C8B4, c4: 0xFFB547, deep: 0x3341C7, give: 0x2F6BFF, bg: 0xEFF2F6, card: 0xEAF0F7, shadow: 0x1E3C78,
+    static let neel = Palette(id: "neel", name: "Neel", mood: "Shaant", c1: 0x2F6BFF, c2: 0x3341C7, c3: 0x14C8B4, c4: 0xFFB547, deep: 0x3341C7, give: 0x2F6BFF, bg: 0xEFF2F6, card: 0xEAF0F7, shadow: 0x1E3C78,
                               wing: [0x14215E, 0x2F6BFF, 0x9EF0E0], body: 0x0E1633, rim: 0xCFE3FF, hemi: 0xD4E0F5, note: 0x5C8BFF)
-    static let kesar = Palette(id: "kesar", name: "Kesar", mood: "Kesariya, garam", c1: 0xF2762E, c2: 0x0F7C78, c3: 0x2BB3A3, c4: 0xF5C04A, deep: 0x0F7C78, give: 0xD9601C, bg: 0xF5F1EC, card: 0xF6F0E8, shadow: 0x6E461E,
+    static let kesar = Palette(id: "kesar", name: "Kesar", mood: "Garam", c1: 0xF2762E, c2: 0x0F7C78, c3: 0x2BB3A3, c4: 0xF5C04A, deep: 0x0F7C78, give: 0xD9601C, bg: 0xF5F1EC, card: 0xF6F0E8, shadow: 0x6E461E,
                                wing: [0x0B3B3A, 0x13968F, 0xFFD98A], body: 0x1F1A14, rim: 0xFFE1C4, hemi: 0xF3E4D2, note: 0x3FB8A8)
-    static let mor = Palette(id: "mor", name: "Mor", mood: "Mor pankh, taaza", c1: 0x0E9F8E, c2: 0x155E9C, c3: 0x38BDF8, c4: 0xF4B740, deep: 0x155E9C, give: 0x0B8577, bg: 0xEEF3F3, card: 0xEBF3F3, shadow: 0x14465A,
+    static let mor = Palette(id: "mor", name: "Mor", mood: "Taaza", c1: 0x0E9F8E, c2: 0x155E9C, c3: 0x38BDF8, c4: 0xF4B740, deep: 0x155E9C, give: 0x0B8577, bg: 0xEEF3F3, card: 0xEBF3F3, shadow: 0x14465A,
                              wing: [0x0B2E4F, 0x1F7BC4, 0xB8F5E6], body: 0x0B1E2E, rim: 0xC9F2EA, hemi: 0xD2E6EE, note: 0x3AA9D6)
     static let gulaal = Palette(id: "gulaal", name: "Gulaal", mood: "Holi ke rang", c1: 0xFF4FA3, c2: 0x7B61FF, c3: 0x00C2FF, c4: 0xFFB547, deep: 0x6A55D8, give: 0xE0336F, bg: 0xF2F1F5, card: 0xF1ECF7, shadow: 0x5A3CA0,
                                 wing: [0x3B1FA8, 0x5B6BFF, 0xFFD27A], body: 0x1B1233, rim: 0xFFC6EF, hemi: 0xD9CCFF, note: 0x9D8BFF)
