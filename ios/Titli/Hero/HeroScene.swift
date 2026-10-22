@@ -87,7 +87,8 @@ final class HeroScene: NSObject, SCNSceneRendererDelegate {
 
         // wing texture, drawn like the web canvas
         let w: CGFloat = 1024, h: CGFloat = 1536
-        let toPx = CGAffineTransform(a: w / (x1 - x0), b: 0, c: 0, d: -h / (y1 - y0), tx: -x0 * w / (x1 - x0), ty: y1 * h / (y1 - y0))
+        let sx: CGFloat = w / (x1 - x0), sy: CGFloat = h / (y1 - y0)
+        let toPx = CGAffineTransform(a: sx, b: 0, c: 0, d: -sy, tx: -x0 * sx, ty: y1 * sy)
         let fmt = UIGraphicsImageRendererFormat(); fmt.scale = 1; fmt.opaque = false
         let tex = UIGraphicsImageRenderer(size: CGSize(width: w, height: h), format: fmt).image { ctx in
             let g = ctx.cgContext, space = CGColorSpaceCreateDeviceRGB()
@@ -174,8 +175,10 @@ final class HeroScene: NSObject, SCNSceneRendererDelegate {
         for n in [abdomen, thorax, head] { n.geometry!.firstMaterial = dark; butterfly.addChildNode(n) }
         for sx: Float in [1, -1] {
             let pts: [SIMD3<Float>] = (0...8).map { i in
-                let t = Float(i) / 8, a = SIMD3<Float>(sx * 0.02, 0.3, 0), b = SIMD3<Float>(sx * 0.12, 0.6, 0.05), c = SIMD3<Float>(sx * 0.28, 0.85, 0.08)
-                return (1 - t) * (1 - t) * a + 2 * (1 - t) * t * b + t * t * c
+                let t: Float = Float(i) / 8, u: Float = 1 - t
+                let a = SIMD3<Float>(sx * 0.02, 0.3, 0), b = SIMD3<Float>(sx * 0.12, 0.6, 0.05), c = SIMD3<Float>(sx * 0.28, 0.85, 0.08)
+                let wa: Float = u * u, wb: Float = 2 * u * t, wc: Float = t * t
+                return wa * a + wb * b + wc * c
             }
             for i in 0..<8 { butterfly.addChildNode(Self.segment(pts[i], pts[i + 1], 0.009, dark)) }
             let tip = SCNNode(geometry: SCNSphere(radius: 0.03)); tip.geometry!.firstMaterial = dark; tip.simdPosition = pts[8]
@@ -191,13 +194,21 @@ final class HeroScene: NSObject, SCNSceneRendererDelegate {
         let n = 240, m = 18, up = SIMD3<Float>(0, 1, 0)
         var pos: [SCNVector3] = [], col: [SIMD4<Float>] = [], uv: [CGPoint] = [], idx: [Int32] = []
         for i in 0...n {
-            let t = Float(i) / Float(n), p = path.point(at: t), tg = path.tangent(at: t)
-            let side = simd_normalize(simd_cross(tg, up)), nrm = simd_normalize(simd_cross(side, tg))
-            let a = twist * sin(t * 5 + off) + off * 0.5, dir = nrm * cos(a) + side * sin(a)
-            let w = width * sin(.pi * min(t, 0.999) * 0.5) * (1 - 0.85 * t * t)
-            let u = t * 2.999, k = Int(u), c = simd_mix(stops[k], stops[min(3, k + 1)], SIMD3(repeating: u - Float(k)))
+            let t: Float = Float(i) / Float(n)
+            let p: SIMD3<Float> = path.point(at: t), tg: SIMD3<Float> = path.tangent(at: t)
+            let side: SIMD3<Float> = simd_normalize(simd_cross(tg, up))
+            let nrm: SIMD3<Float> = simd_normalize(simd_cross(side, tg))
+            let a: Float = twist * sin(t * 5 + off) + off * 0.5
+            let dir: SIMD3<Float> = nrm * cos(a) + side * sin(a)
+            let taper: Float = 1 - 0.85 * t * t
+            let w: Float = width * sin(Float.pi * min(t, 0.999) * 0.5) * taper
+            let u: Float = t * 2.999
+            let k = Int(u)
+            let c: SIMD3<Float> = simd_mix(stops[k], stops[min(3, k + 1)], SIMD3<Float>(repeating: u - Float(k)))
+            let shift: SIMD3<Float> = side * (off * 0.04)
             for j in 0...m {
-                let q = p + dir * ((Float(j) / Float(m) - 0.5) * w) + side * (off * 0.04)
+                let f: Float = (Float(j) / Float(m) - 0.5) * w
+                let q: SIMD3<Float> = p + dir * f + shift
                 pos.append(SCNVector3(q)); col.append(SIMD4(c, 1)); uv.append(CGPoint(x: CGFloat(t), y: CGFloat(j) / CGFloat(m)))
             }
         }
@@ -291,24 +302,30 @@ final class HeroScene: NSObject, SCNSceneRendererDelegate {
         let t = Float(time - start!), ans = mode == .answer, listen = mode == .listen
         // camera framing per mode, eased
         let tgt = SIMD3<Float>(ans ? -0.5 : -0.7, -0.2, 0)
-        let k = 2 * tan(Float(15) * .pi / 180)
-        let dist = max((ans ? 3.1 : 2.9) / k, (ans ? 5.6 : 4.5) / (k * aspect))
+        let k: Float = 2 * tan(Float(15) * Float.pi / 180)
+        let fitH: Float = (ans ? 3.1 : 2.9) / k
+        let fitW: Float = (ans ? 5.6 : 4.5) / (k * aspect)
+        let dist: Float = max(fitH, fitW)
         let ease: Float = 0.08
         camTgt += (tgt - camTgt) * ease
-        camPos += (SIMD3(tgt.x, tgt.y + 0.35, tgt.z + dist) - camPos) * ease
+        let want = SIMD3<Float>(tgt.x, tgt.y + 0.35, tgt.z + dist)
+        camPos += (want - camPos) * ease
         camera.simdPosition = camPos; camera.simdLook(at: camTgt)
         // flap + float
-        let flap = sin(t * (listen ? 9 : 4.2)) * (listen ? 0.5 : 0.32)
+        let flap: Float = sin(t * (listen ? 9 : 4.2)) * (listen ? 0.5 : 0.32)
         wingR.eulerAngles.y = -0.42 - flap
         wingL.eulerAngles.y = 0.42 + flap
         let target = SIMD3<Float>(ans ? -0.6 : 0.12, ans ? 0.25 : 0.18, 0), sc: Float = ans ? 0.6 : 0.7
         bPos += (target - bPos) * ease; bScale += (sc - bScale) * ease
-        butterfly.simdPosition = bPos + [0, sin(t * 1.3) * 0.06, 0]
+        let bob: Float = sin(t * 1.3) * 0.06
+        butterfly.simdPosition = bPos + SIMD3<Float>(0, bob, 0)
         butterfly.simdScale = SIMD3(repeating: bScale)
-        drawT = listen ? 0.55 + 0.45 * (t * 0.25).truncatingRemainder(dividingBy: 1) : 1
+        let cycle: Float = (t * 0.25).truncatingRemainder(dividingBy: 1)
+        drawT = listen ? 0.55 + 0.45 * cycle : 1
         for r in ribbons { r.geometry?.firstMaterial?.setValue(NSNumber(value: drawT), forKey: "upto") }
         for (i, p) in pearls.enumerated() {
-            p.node.simdPosition = path.point(at: p.t) + [0, sin(t * 1.6 + Float(i)) * 0.03, 0]
+            let lift: Float = sin(t * 1.6 + Float(i)) * 0.03
+            p.node.simdPosition = path.point(at: p.t) + SIMD3<Float>(0, lift, 0)
             p.node.isHidden = listen && i == 0
         }
         if let b = big { b.position.y = -0.1 + sin(t * 1.2) * 0.05; b.eulerAngles.y = t * 0.3 }
@@ -364,9 +381,10 @@ final class HeroScene: NSObject, SCNSceneRendererDelegate {
             case .addCurveToPoint:
                 let (c1, c2, to) = (pts[0], pts[1], pts[2])
                 for i in 1...24 {
-                    let t = CGFloat(i) / 24, u = 1 - t
-                    let x = u * u * u * cur.x + 3 * u * u * t * c1.x + 3 * u * t * t * c2.x + t * t * t * to.x
-                    let y = u * u * u * cur.y + 3 * u * u * t * c1.y + 3 * u * t * t * c2.y + t * t * t * to.y
+                    let t: CGFloat = CGFloat(i) / 24, u: CGFloat = 1 - t
+                    let w0: CGFloat = u * u * u, w1: CGFloat = 3 * u * u * t, w2: CGFloat = 3 * u * t * t, w3: CGFloat = t * t * t
+                    let x: CGFloat = w0 * cur.x + w1 * c1.x + w2 * c2.x + w3 * to.x
+                    let y: CGFloat = w0 * cur.y + w1 * c1.y + w2 * c2.y + w3 * to.y
                     out.append(CGPoint(x: x, y: y))
                 }
                 cur = to
@@ -404,9 +422,17 @@ struct Curve {
         for seg in 0..<(n - 1) {
             let p0 = p[max(seg - 1, 0)], p1 = p[seg], p2 = p[seg + 1], p3 = p[min(seg + 2, n - 1)]
             for i in 0..<40 {
-                let t = Float(i) / 40, t2 = t * t, t3 = t2 * t
-                let a = 2 * p1, b = p2 - p0, c = 2 * p0 - 5 * p1 + 4 * p2 - p3, d = -p0 + 3 * p1 - 3 * p2 + p3
-                samples.append(0.5 * (a + b * t + c * t2 + d * t3))
+                let t: Float = Float(i) / 40
+                let t2: Float = t * t, t3: Float = t2 * t
+                let a: SIMD3<Float> = 2 * p1
+                let b: SIMD3<Float> = p2 - p0
+                var c: SIMD3<Float> = 2 * p0 - 5 * p1
+                c += 4 * p2 - p3
+                var d: SIMD3<Float> = 3 * p1 - p0
+                d += p3 - 3 * p2
+                var q: SIMD3<Float> = a + b * t
+                q += c * t2 + d * t3
+                samples.append(0.5 * q)
             }
         }
         samples.append(p[n - 1])
