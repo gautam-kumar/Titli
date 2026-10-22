@@ -63,7 +63,7 @@ struct HomeTiles: View {
             }
             HStack(spacing: 10) {
                 Button { if let d = docs.first { open(d) } } label: {
-                    ObjectTile(glow: Theme.cyan, label: "Kaagaz · \(docs.count)", image: "card", imageWidth: 132, imageOffset: CGSize(width: 24, height: 34), imageAtBottom: true) { EmptyView() }
+                    ObjectTile(glow: Theme.cyan, label: "Kaagaz · \(docs.count)", image: "card", imageWidth: 160, imageOffset: CGSize(width: 14, height: 22), imageAtBottom: true) { EmptyView() }
                 }
                 GlassTile(glow: Theme.amber) {
                     VStack(alignment: .leading, spacing: 0) {

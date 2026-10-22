@@ -237,7 +237,11 @@ final class HeroScene: NSObject, SCNSceneRendererDelegate {
         float fade = smoothstep(0.0, 0.25, uv.x);
         float shimmer = 0.85 + 0.15 * sin(uv.x * 30.0 - tm * 3.0);
         float al = op * pow(max(e, 0.0), 0.9) * strand * fade * shimmer;
-        _output.color = float4(_output.color.rgb * al, al);
+        float g = uv.x * 2.999;
+        float3 c0 = float3(0.0, 0.761, 1.0), c1 = float3(0.482, 0.380, 1.0), c2 = float3(1.0, 0.310, 0.639), c3 = float3(1.0, 0.710, 0.278);
+        float3 col = g < 1.0 ? mix(c0, c1, g) : (g < 2.0 ? mix(c1, c2, g - 1.0) : mix(c2, c3, g - 2.0));
+        col = pow(col, float3(2.2));
+        _output.color = float4(col * al, al);
         """]
         mat.setValue(NSNumber(value: op), forKey: "op")
         mat.setValue(NSNumber(value: 1.0), forKey: "upto")
