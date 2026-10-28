@@ -6,6 +6,9 @@ options:
 packages:
   TitliCore:
     path: TitliCore
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: 12.5.0
 targets:
   Titli:
     type: application
@@ -14,6 +17,12 @@ targets:
       - path: Titli
     dependencies:
       - package: TitliCore
+      - package: Firebase
+        product: FirebaseAILogic
+      - package: Firebase
+        product: FirebaseAppCheck
+      - package: Firebase
+        product: FirebaseCore
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.gautamkumar.titli
@@ -23,6 +32,8 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SWIFT_VERSION: "5.0"
         INFOPLIST_KEY_CFBundleDisplayName: Titli
+        CODE_SIGN_ENTITLEMENTS: Titli/Titli.entitlements
+        OTHER_LDFLAGS: ["$(inherited)", "-ObjC"]
     info:
       path: Titli/Info.plist
       properties:

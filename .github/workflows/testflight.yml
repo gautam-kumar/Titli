@@ -2,7 +2,8 @@ name: TestFlight
 
 # Builds a signed release and uploads it to TestFlight.
 # Needs repository secrets: ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8 (App Store Connect API key, App Manager role)
-# and APPLE_TEAM_ID. Signing certificates and profiles are created by Xcode's cloud signing.
+# and APPLE_TEAM_ID. Optional: GOOGLE_SERVICE_INFO_PLIST (the whole Firebase plist) turns on Gemini;
+# without it the app uses its on-phone parser only. Signing certificates and profiles are created by Xcode's cloud signing.
 
 on:
   workflow_dispatch:
@@ -28,6 +29,13 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/keys"
           printf '%s' "${{ secrets.ASC_KEY_P8 }}" > "$RUNNER_TEMP/keys/AuthKey.p8"
+
+      - name: Add Firebase config
+        env:
+          PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+        run: |
+          if [ -n "$PLIST" ]; then printf '%s' "$PLIST" > ios/Titli/GoogleService-Info.plist; plutil -lint ios/Titli/GoogleService-Info.plist
+          else echo "::warning::No GOOGLE_SERVICE_INFO_PLIST secret, building without Gemini"; fi
 
       - name: Generate Xcode project
         working-directory: ios

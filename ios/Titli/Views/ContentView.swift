@@ -22,6 +22,7 @@ struct ContentView: View {
     @State private var savedCount = 0
     @State private var themeID = Palette.active.id
     @State private var showThemes = false
+    @State private var thinking = false
     @FocusState private var typerFocused: Bool
     @Environment(\.openURL) private var openURL
 
@@ -215,7 +216,8 @@ struct ContentView: View {
 
     private struct PillContent { var label: String; var icon: AnyView }
     private var pill: PillContent {
-        switch screen {
+        if thinking { return PillContent(label: "Samajh rahi hoon…", icon: AnyView(ProgressView().tint(.white))) }
+        return switch screen {
         case .listen: PillContent(label: "Bas, ho gaya", icon: AnyView(RoundedRectangle(cornerRadius: 3).fill(.white).frame(width: 12, height: 12)))
         case .saved: PillContent(label: "Galat hai? Hata dein", icon: AnyView(Image(systemName: "arrow.uturn.backward").font(.system(size: 17, weight: .semibold)).foregroundStyle(.white)))
         case .answer(_, let a) where a.kind == .money && a.net > 0:
@@ -225,6 +227,7 @@ struct ContentView: View {
     }
 
     private func pillAction() {
+        guard !thinking else { return }
         switch screen {
         case .listen: voice.finish()
         case .saved(let m): store.remove(m); show("Hata diya"); goHome()
@@ -276,10 +279,28 @@ struct ContentView: View {
         handle(v)
     }
 
+    /// Gemini first when it's set up; the on-phone parser if it isn't, or doesn't answer in time.
     private func handle(_ text: String) {
+        guard AIService.ready else { return apply(text, local(text)) }
+        thinking = true
+        let memories = store.memories
+        Task {
+            let r = await AIService.understand(text, memories: memories) ?? local(text)
+            thinking = false
+            apply(text, r)
+        }
+    }
+
+    private func local(_ text: String) -> AIResult {
         switch Brain.understand(text) {
-        case .question(let q):
-            let a = Brain.answer(q, store.memories)
+        case .question(let q): .answer(Brain.answer(q, store.memories))
+        case .memory(let m): .memory(m)
+        }
+    }
+
+    private func apply(_ text: String, _ r: AIResult) {
+        switch r {
+        case .answer(let a):
             screen = .answer(text, a)
             speak(a.say)
         case .memory(let m):

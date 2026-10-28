@@ -3,3 +3,4 @@ ios/build/
 ios/shots/
 ios/TitliCore/.build/
 .DS_Store
+ios/Titli/GoogleService-Info.plist
