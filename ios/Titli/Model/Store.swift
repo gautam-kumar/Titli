@@ -20,7 +20,10 @@ import TitliCore
     }
 
     func add(_ m: Memory) { memories.insert(m, at: 0); save() }
-    func remove(_ m: Memory) { memories.removeAll { $0.id == m.id }; save() }
+    func remove(_ m: Memory) {
+        memories.removeAll { $0.id == m.id }; save()
+        if let a = m.attachment { Files.delete(a) }
+    }
 
     private func save() {
         guard let data = try? Self.encoder.encode(memories) else { return }

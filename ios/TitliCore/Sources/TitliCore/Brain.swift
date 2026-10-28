@@ -286,7 +286,10 @@ public enum Brain {
         }
         if l.test("\\b(kahan|kaha|kidhar|where|rakha|rakhi|rakhe)\\b") {
             let doc = findDoc(l)
-            if let hit = mems.first(where: { $0.kind == .doc && (doc == nil || $0.doc == doc!.1) }) {
+            let docs = mems.filter { $0.kind == .doc && (doc == nil || $0.doc == doc!.1) }
+            // with no known document name, pick the one sharing the most words with the question
+            let overlap = { (m: Memory) -> Int in words.filter { $0.count > 2 && !STOP.contains($0) && loose(m.raw + " " + (m.doc ?? "")).contains($0) }.count }
+            if let hit = doc == nil ? docs.max(by: { overlap($0) < overlap($1) }).flatMap({ overlap($0) > 0 ? $0 : docs.first }) : docs.first {
                 return Answer(kind: .doc, entries: [hit], focus: hit, say: docSay(hit))
             }
         }
@@ -303,6 +306,28 @@ public enum Brain {
             return Answer(kind: .note, entries: [best.0], focus: best.0, say: best.0.raw)
         }
         return Answer(kind: .none, say: "Iske baare mein mujhe abhi kuch yaad nahi hai.")
+    }
+
+    /// Attach a photo or file to what was said about it. A bare label ("Ramesh ka bijli bill") becomes a document kept on the phone;
+    /// money or reminders keep their meaning and carry the file along (a receipt, a bill).
+    public static func attach(_ a: Attachment, to heard: Heard, now: Date = Date()) -> Memory {
+        var m: Memory
+        switch heard {
+        case .memory(let x): m = x
+        case .question(let q): m = Memory(raw: q.raw, created: now)
+        }
+        m.attachment = a
+        if m.kind == .note {
+            m.kind = .doc
+            let label = m.raw.trimmingCharacters(in: .whitespacesAndNewlines)
+                .rep("^(ye|yeh|yah|is|isko|ise|this is)\\s+", "", true)
+                .rep("\\s+(hai|he|h)[.!]*$", "", true)
+                .rep("\\s+(ki|ka|ke)\\s+(photo|foto|fotu|tasveer|tasvir|file|scan|copy|pdf)$", "", true)
+                .rep("[.!?।]+$", "")
+            m.doc = label.isEmpty ? (a.kind == .image ? "Photo" : a.name) : label.prefix(1).uppercased() + label.dropFirst()
+        }
+        if m.kind == .doc && m.place == nil { m.place = "Phone" }
+        return describe(m)
     }
 
     public static func docSay(_ m: Memory) -> String {
