@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#F2F1F5">
+<meta name="theme-color" content="#EFF2F6">
 <title>Titli</title>
 <meta name="description" content="Bolo, aur Titli yaad rakhegi. Paise, kaagaz aur zaroori baatein, Hindi ya Hinglish mein.">
 <link rel="manifest" href="manifest.webmanifest">
@@ -18,7 +18,7 @@
 <div class="aura" aria-hidden="true"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div>
 <main class="app" id="app" data-mode="home">
   <header class="top">
-    <div class="meta"><span id="metaLeft"></span><span id="metaRight"></span></div>
+    <div class="meta"><span id="metaLeft"></span><span class="meta-r"><span id="metaRight"></span><button class="swatch-btn" id="themeBtn" aria-label="Rang badlein"></button></span></div>
     <button class="back" id="back" aria-label="Wapas">‹ Wapas</button>
     <h1 class="greet" id="greet"></h1>
   </header>
@@ -41,6 +41,12 @@
     <button type="submit" aria-label="Bhejein">↑</button>
   </form>
   <div class="toast" id="toast"></div>
+  <div class="sheet-back" id="sheetBack" hidden></div>
+  <section class="sheet" id="themeSheet" hidden aria-label="Titli ka rang">
+    <div class="sheet-grip"></div>
+    <h2>Titli ka rang</h2>
+    <div class="themes" id="themeList"></div>
+  </section>
 </main>
 <script type="module" src="app.js"></script>
 </body>
