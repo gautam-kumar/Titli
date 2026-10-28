@@ -27,6 +27,8 @@ targets:
       path: Titli/Info.plist
       properties:
         CFBundleDisplayName: Titli
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
         UILaunchScreen:
           UIColorName: ""
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
