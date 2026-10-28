@@ -18,6 +18,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # App Store Connect only accepts builds made with the iOS 26 SDK or later.
+      - name: Use Xcode 26
+        run: |
+          ls -d /Applications/Xcode*.app
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XC" ]; then echo "::error::No Xcode 26 on this runner"; exit 1; fi
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
+
       - name: Check secrets
         run: |
           for v in ASC_KEY_ID ASC_ISSUER_ID TEAM_ID; do
