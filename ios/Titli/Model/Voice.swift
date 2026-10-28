@@ -20,7 +20,10 @@ import Speech
     private var onDone: ((String) -> Void)?
     private let synth = AVSpeechSynthesizer()
 
+    private enum VoiceError: Error { case noMic }
+
     func start(onDone: @escaping (String) -> Void, onProblem: @escaping (Problem) -> Void) {
+        guard !listening else { return }
         synth.stopSpeaking(at: .immediate)
         SFSpeechRecognizer.requestAuthorization { status in
             AVAudioApplication.requestRecordPermission { mic in
@@ -43,7 +46,11 @@ import Speech
         request = req
         transcript = ""; onDone = done; startedAt = Date(); listening = true
         let input = engine.inputNode
-        input.installTap(onBus: 0, bufferSize: 1024, format: input.outputFormat(forBus: 0)) { [weak self] buf, _ in
+        // After Titli has spoken, the session switches back from playback; a stale or empty format here crashes the tap.
+        let format = input.outputFormat(forBus: 0)
+        guard format.sampleRate > 0, format.channelCount > 0 else { listening = false; throw VoiceError.noMic }
+        input.removeTap(onBus: 0)
+        input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buf, _ in
             req.append(buf)
             guard let ch = buf.floatChannelData?[0] else { return }
             let n = Int(buf.frameLength)

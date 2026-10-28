@@ -2,7 +2,7 @@ name: iOS
 
 on:
   push:
-    branches: [main, ios]
+    branches: [main, ios, attach]
     paths: ["ios/**", ".github/workflows/ios.yml"]
   pull_request:
     paths: ["ios/**", ".github/workflows/ios.yml"]
@@ -67,7 +67,7 @@ jobs:
             sleep 8
             xcrun simctl io "$UDID" screenshot "shots/$name.png"
           }
-          for s in home listen saved answer doc themes; do shot $s -theme neel -screen $s; done
+          for s in home listen saved answer doc themes attach attached; do shot $s -theme neel -screen $s; done
           for t in kesar mor gulaal; do shot home-$t -theme $t -screen home; done
           xcrun simctl spawn "$UDID" log show --last 3m --predicate 'process == "Titli"' --style compact > shots/app.log 2>/dev/null || true
 

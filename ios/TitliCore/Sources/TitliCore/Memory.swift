@@ -20,10 +20,26 @@ public struct Memory: Codable, Identifiable, Equatable, Hashable {
     public var time: String?
     public var title = ""
     public var sub = ""
+    /// A photo or file kept on the phone alongside this memory.
+    public var attachment: Attachment?
 
     public init(raw: String, created: Date = Date()) {
         self.raw = raw
         self.created = created
+    }
+}
+
+/// A photo or document saved on the phone. Only its label ever leaves the device.
+public struct Attachment: Codable, Equatable, Hashable {
+    public enum Kind: String, Codable { case image, pdf, file }
+    /// File name inside the app's files folder.
+    public var file: String
+    public var kind: Kind
+    /// The original name, shown for documents.
+    public var name: String
+
+    public init(file: String, kind: Kind, name: String) {
+        self.file = file; self.kind = kind; self.name = name
     }
 }
 

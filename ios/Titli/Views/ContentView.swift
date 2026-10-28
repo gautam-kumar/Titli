@@ -1,4 +1,7 @@
+import PhotosUI
+import QuickLook
 import SwiftUI
+import UniformTypeIdentifiers
 import TitliCore
 
 enum Screen: Equatable {
@@ -22,6 +25,14 @@ struct ContentView: View {
     @State private var savedCount = 0
     @State private var themeID = Palette.active.id
     @State private var showThemes = false
+    /// A photo or file waiting to be told what it is.
+    @State private var pending: Attachment?
+    @State private var showAttach = false
+    @State private var showPhotos = false
+    @State private var showFiles = false
+    @State private var showCamera = false
+    @State private var photoItem: PhotosPickerItem?
+    @State private var previewURL: URL?
     @FocusState private var typerFocused: Bool
     @Environment(\.openURL) private var openURL
 
@@ -42,7 +53,11 @@ struct ContentView: View {
             .padding(.horizontal, 12)
             .padding(.bottom, 6)
             .id(themeID)
-            if typing { typer.padding(.horizontal, 12).padding(.bottom, 82).transition(.move(edge: .bottom).combined(with: .opacity)) }
+            VStack(spacing: 8) {
+                if let pending, screen != .listen { pendingBanner(pending).transition(.move(edge: .bottom).combined(with: .opacity)) }
+                if typing { typer.transition(.move(edge: .bottom).combined(with: .opacity)) }
+            }
+            .padding(.horizontal, 12).padding(.bottom, 82)
         }
         .overlay(alignment: .top) {
             if let toast {
@@ -55,6 +70,7 @@ struct ContentView: View {
         }
         .animation(.spring(response: 0.45, dampingFraction: 0.85), value: screen)
         .animation(.easeOut(duration: 0.25), value: typing)
+        .animation(.easeOut(duration: 0.25), value: pending)
         .animation(.easeOut(duration: 0.3), value: toast)
         .sensoryFeedback(.success, trigger: savedCount)
         .sensoryFeedback(.impact(weight: .medium), trigger: voice.listening)
@@ -65,6 +81,66 @@ struct ContentView: View {
                 .presentationCornerRadius(28)
                 .presentationBackground(.regularMaterial)
         }
+        .confirmationDialog("Kya jodna hai?", isPresented: $showAttach, titleVisibility: .visible) {
+            if UIImagePickerController.isSourceTypeAvailable(.camera) { Button("Photo kheenchein") { showCamera = true } }
+            Button("Gallery se photo") { showPhotos = true }
+            Button("File chunein (PDF ya koi bhi)") { showFiles = true }
+            Button("Rehne dein", role: .cancel) {}
+        }
+        .photosPicker(isPresented: $showPhotos, selection: $photoItem, matching: .images)
+        .onChange(of: photoItem) { _, item in
+            guard let item else { return }
+            photoItem = nil
+            Task {
+                let data = try? await item.loadTransferable(type: Data.self)
+                if let data, let img = UIImage(data: data) { attached(Files.save(img)) } else { show("Photo nahi khul payi") }
+            }
+        }
+        .fileImporter(isPresented: $showFiles, allowedContentTypes: [.pdf, .image, .item]) { result in
+            if case .success(let url) = result { attached(Files.copy(url)) }
+        }
+        .fullScreenCover(isPresented: $showCamera) {
+            CameraPicker { img in
+                showCamera = false
+                if let img { attached(Files.save(img)) }
+            }
+            .ignoresSafeArea()
+        }
+        .quickLookPreview($previewURL)
+        .environment(\.openAttachment, { (a: Attachment) in previewURL = Files.url(a) })
+    }
+
+    private func attached(_ a: Attachment?) {
+        guard let a else { return show("Yeh file save nahi ho payi") }
+        if let old = pending { Files.delete(old) }
+        pending = a
+        goHome()
+        speak("Yeh kya hai? Bataiye.")
+    }
+
+    private func pendingBanner(_ a: Attachment) -> some View {
+        HStack(spacing: 12) {
+            Group {
+                if let t = Files.thumbnail(a, size: 120) { Image(uiImage: t).resizable().scaledToFill() }
+                else { Image(systemName: "doc.fill").font(.system(size: 20)).foregroundStyle(Theme.violet) }
+            }
+            .frame(width: 46, height: 46).background(.white)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Yeh kya hai?").font(.jakarta(15, .extraBold)).foregroundStyle(Theme.ink)
+                Text("Boliye ya likhiye, jaise “Ramesh ka bijli bill”").font(.jakarta(12, .medium)).foregroundStyle(Theme.mute).lineLimit(2)
+            }
+            Spacer(minLength: 4)
+            Button { Files.delete(a); pending = nil } label: {
+                Image(systemName: "xmark").font(.system(size: 13, weight: .bold)).foregroundStyle(Theme.mute)
+                    .frame(width: 32, height: 32).background(.white.opacity(0.8), in: Circle())
+            }
+            .accessibilityLabel("Hata dein")
+        }
+        .padding(10)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(.white, lineWidth: 1))
+        .shadow(color: Theme.ink.opacity(0.25), radius: 18, y: 12)
     }
 
     private func pickTheme(_ p: Palette) {
@@ -117,6 +193,9 @@ struct ContentView: View {
 
     @ViewBuilder private var greeting: some View {
         switch screen {
+        case .home where pending != nil:
+            (Text((pending?.kind == .image ? "Photo" : "File") + " mil gayi.\n").font(.sora(38, .extraLight)) + Text("Yeh kya hai?").font(.sora(38, .medium)))
+                .foregroundStyle(Theme.ink).tracking(-1.4).lineSpacing(-4)
         case .home:
             (Text(hello + "\n").font(.sora(38, .extraLight)) + Text("Kya yaad rakhein?").font(.sora(38, .medium)))
                 .foregroundStyle(Theme.ink).tracking(-1.4).lineSpacing(-4)
@@ -182,6 +261,17 @@ struct ContentView: View {
 
     private var dock: some View {
         HStack(spacing: 10) {
+            if screen == .home {
+                Button { showAttach = true } label: {
+                    Image(systemName: "paperclip").font(.system(size: 20, weight: .semibold)).foregroundStyle(Theme.ink)
+                        .frame(width: 56, height: 64)
+                        .background(.ultraThinMaterial, in: Capsule())
+                        .background(Capsule().fill(.white.opacity(0.6)))
+                        .overlay(Capsule().strokeBorder(.white, lineWidth: 1))
+                        .shadow(color: Theme.shadow.opacity(0.3), radius: 15, y: 12)
+                }
+                .accessibilityLabel("Photo ya file jodein")
+            }
             Button { typing.toggle(); typerFocused = typing } label: {
                 Text("Aa").font(.sora(17, .medium)).foregroundStyle(Theme.ink)
                     .frame(width: 64, height: 64)
@@ -277,6 +367,16 @@ struct ContentView: View {
     }
 
     private func handle(_ text: String) {
+        if let a = pending {
+            pending = nil
+            let m = Brain.attach(a, to: Brain.understand(text))
+            store.add(m)
+            savedCount += 1
+            screen = .saved(m)
+            show("Yaad rakh liya ✓")
+            speak("Theek hai, \(m.title) phone mein rakh liya.")
+            return
+        }
         switch Brain.understand(text) {
         case .question(let q):
             let a = Brain.answer(q, store.memories)
@@ -320,6 +420,8 @@ struct ContentView: View {
         case "answer": handle("Ramesh ko kitna diya tha?")
         case "doc": handle("आधार कार्ड कहाँ रखा है?")
         case "themes": showThemes = true
+        case "attach": pending = Files.sample()
+        case "attached": pending = Files.sample(); handle("Ramesh ka bijli bill")
         default: break
         }
     }

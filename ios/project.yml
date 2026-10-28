@@ -39,6 +39,7 @@ targets:
           - PlusJakartaSans-Bold.ttf
           - PlusJakartaSans-ExtraBold.ttf
         NSMicrophoneUsageDescription: "Titli aapki baat sunkar yaad rakhti hai. (Titli listens so it can remember what you say.)"
+        NSCameraUsageDescription: "Kaagaz ki photo kheenchne ke liye. Photo sirf aapke phone mein rehti hai. (To photograph papers. Photos stay on your phone.)"
         NSSpeechRecognitionUsageDescription: "Aapki awaaz ko likhne ke liye. (To turn your voice into text.)"
         ITSAppUsesNonExemptEncryption: false
         LSApplicationQueriesSchemes: [whatsapp]

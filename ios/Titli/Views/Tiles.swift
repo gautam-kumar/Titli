@@ -147,6 +147,58 @@ struct MemoryTiles: View {
                     Text(m.raw).font(.jakarta(17, .extraBold)).foregroundStyle(Theme.ink).lineLimit(3)
                 }
             }
+            if let a = m.attachment { AttachmentTile(attachment: a) }
+        }
+    }
+}
+
+/// Opens an attached photo or file full screen.
+struct OpenAttachmentKey: EnvironmentKey { static let defaultValue: (Attachment) -> Void = { _ in } }
+extension EnvironmentValues {
+    var openAttachment: (Attachment) -> Void {
+        get { self[OpenAttachmentKey.self] }
+        set { self[OpenAttachmentKey.self] = newValue }
+    }
+}
+
+/// The photo or document kept with a memory, shown like a print tucked into the tile.
+struct AttachmentTile: View {
+    var attachment: Attachment
+    @Environment(\.openAttachment) private var open
+    @State private var thumb: UIImage?
+
+    var body: some View {
+        Button { open(attachment) } label: {
+            GlassTile(glow: Theme.pink, minHeight: 0) {
+                HStack(spacing: 14) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Label12(text: "Phone mein rakha")
+                        Text(attachment.kind == .image ? "Photo" : attachment.name)
+                            .font(.jakarta(18, .extraBold)).tracking(-0.4).foregroundStyle(Theme.ink).lineLimit(2)
+                        Chip(text: "Dekhne ke liye chhuein")
+                    }
+                    Spacer(minLength: 4)
+                    preview
+                        .frame(width: 92, height: 92)
+                        .background(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(.white, lineWidth: 4))
+                        .shadow(color: Theme.shadow.opacity(0.35), radius: 10, y: 8)
+                        .rotationEffect(.degrees(4))
+                        .padding(.trailing, 4)
+                }
+            }
+        }
+        .buttonStyle(PressStyle())
+        .task(id: attachment.file) { thumb = Files.thumbnail(attachment) }
+        .accessibilityLabel("Rakha hua \(attachment.kind == .image ? "photo" : "kaagaz") kholein")
+    }
+
+    @ViewBuilder private var preview: some View {
+        if let thumb {
+            Image(uiImage: thumb).resizable().scaledToFill()
+        } else {
+            Image(systemName: attachment.kind == .pdf ? "doc.richtext" : "doc").font(.system(size: 34)).foregroundStyle(Theme.violet)
         }
     }
 }
